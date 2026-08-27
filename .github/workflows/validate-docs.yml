@@ -16,3 +16,5 @@ jobs:
           python-version: "3.x"
       - name: Validate AskMe structure
         run: python3 scripts/check-askme-structure.py
+      - name: Test AskMe structure validator
+        run: python3 scripts/test-check-askme-structure.py

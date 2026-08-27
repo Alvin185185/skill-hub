@@ -1,0 +1,13 @@
+repos:
+  - repo: local
+    hooks:
+      - id: askme-structure
+        name: Validate AskMe structure
+        entry: python3 scripts/check-askme-structure.py
+        language: system
+        files: ^drafts/devflow/asdm-devflow-skill-askme-design\.md$
+      - id: askme-structure-tests
+        name: Test AskMe structure validator
+        entry: python3 scripts/test-check-askme-structure.py
+        language: system
+        files: ^(scripts/check-askme-structure\.py|scripts/test-check-askme-structure\.py|drafts/devflow/asdm-devflow-skill-askme-design\.md)$

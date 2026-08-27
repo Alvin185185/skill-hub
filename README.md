@@ -31,6 +31,15 @@ AskMe 设计稿提交前运行：
 
 ```bash
 python3 scripts/check-askme-structure.py
+python3 scripts/test-check-askme-structure.py
 ```
 
-校验会阻止成功标准、非目标和验收指标被写成带 `.n` 的独立决策标题，并检查决策编号重复。GitHub Actions 会在 push 和 Pull Request 时自动运行同一检查。
+校验会阻止任何带 `.n` 的决策标题，并检查决策编号重复。说明性角色、成功标准、非目标和能力清单不单独编号；真正独立的问题必须使用同级连续编号。GitHub Actions 会在 push 和 Pull Request 时自动运行检查和回归测试。
+
+GitHub Actions 不能阻止本地 `git commit`。要阻止直接合并到 `main`，必须在 GitHub 分支保护规则中将 `askme-structure` 检查设为必需状态并禁止直接推送；本地提交前拦截则需另行安装 pre-commit hook。
+
+启用本地提交前检查：
+
+```bash
+pre-commit install
+```
