@@ -7,7 +7,7 @@
 > 总体设计：[asdm-devflow-skill-overall-design.md](asdm-devflow-skill-overall-design.md)
 > 详细设计：[asdm-devflow-skill-detail-design.md](asdm-devflow-skill-detail-design.md)
 > 追溯状态：`needs_review`
-> 设计版本：5.17
+> 设计版本：5.18
 
 ## 1. 文档定位
 
@@ -680,9 +680,9 @@ Skill 开发、测试、加载、打包和发布
 
 **推荐理由**：两级已覆盖五类场景（D-B2）；第三级当前无对应需求。
 
-**用户结论**：待确认。
+**用户结论**：接受推荐答案：选择方案 A，采用 Project → Feature* 两级工作对象模型。Project 负责产品目标、工程基线和 MVP，Feature 负责一项可独立验收的业务能力；每个命令一次只处理一个对象，并持久化 `subject_type`、`subject_id` 和 `project_id`。保留未来扩展字段，但当前不为 Epic 等第三层对象增加流程分支。（2026-08-27 确认）
 
-**状态**：⏳ 待确认（`unknown`）
+**状态**：✅ 已确认（`confirmed`）
 
 **验收标准**：每个命令只处理一个对象，并持久化 `subject_type`、`subject_id`、`project_id`。
 
@@ -6213,3 +6213,4 @@ AskMe → 总体设计的交接必须包括：
 | 2026-08-27 | 5.15 | 明确 Coordinator/Worker/Verifier/Reviewer 四角色，增加任务内执行单元、组件验收与集成验收门禁、评审失败精确回退、结论失效重验和真人确认后锁定规则；同步风险档位、状态字段、隔离协议和交付验收描述 |
 | 2026-08-27 | 5.16 | 确认 D-B1 的四角色职责、专业视角和轻量档责任边界；确认 D-B2 的五类支持场景及其他场景的显式处置要求 |
 | 2026-08-27 | 5.17 | 按前置依赖拓扑重排并重新编号对象、变更、UI 和交付决策；将 N.9 收窄为 D-L26 的实现细节；新增依赖必须位于当前决策之前的结构门禁 |
+| 2026-08-27 | 5.18 | 确认 D-C1 采用 Project → Feature* 两级工作对象模型，保留扩展字段但不增加第三层流程分支 |
