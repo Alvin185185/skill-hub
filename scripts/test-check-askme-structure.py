@@ -65,6 +65,38 @@ def main() -> int:
     assert reordered.returncode == 1, reordered.stdout + reordered.stderr
     assert "continuous document order" in reordered.stderr
 
+    ordered_dependency = run_checker(
+        "### 决策点 D-B1：前置\n"
+        "\n**前置依赖**：无。\n"
+        "\n### 决策点 D-B2：后置\n"
+        "\n**前置依赖**：D-B1。\n"
+    )
+    assert ordered_dependency.returncode == 0, (
+        ordered_dependency.stdout + ordered_dependency.stderr
+    )
+
+    forward_dependency = run_checker(
+        "### 决策点 D-B1：错误前置\n"
+        "\n**前置依赖**：D-B2。\n"
+        "\n### 决策点 D-B2：被依赖项\n"
+        "\n**前置依赖**：无。\n"
+    )
+    assert forward_dependency.returncode == 1, (
+        forward_dependency.stdout + forward_dependency.stderr
+    )
+    assert "must appear before the dependent decision" in forward_dependency.stderr
+
+    missing_dependency = run_checker(
+        "### 决策点 D-B1：缺失前置\n"
+        "\n**前置依赖**：D-C1。\n"
+    )
+    assert missing_dependency.returncode == 1, (
+        missing_dependency.stdout + missing_dependency.stderr
+    )
+    assert "prerequisite D-C1 referenced by D-B1 does not exist" in (
+        missing_dependency.stderr
+    )
+
     print("AskMe structure validator tests passed")
     return 0
 

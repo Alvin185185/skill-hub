@@ -17,6 +17,8 @@ DOTTED_HEADING_RE = re.compile(
 )
 DOTTED_ID_RE = re.compile(r"\bD-[A-Z0-9]+\.[0-9]+\b")
 DECISION_INDEX_RE = re.compile(r"(?:独立|关联)决策项索引")
+DEPENDENCY_FIELD_RE = re.compile(r"^\*\*前置依赖\*\*：(.+)$")
+DEPENDENCY_ID_RE = re.compile(r"\bD-[A-Z]\d+\b")
 
 
 def validate(path: Path) -> list[str]:
@@ -24,6 +26,8 @@ def validate(path: Path) -> list[str]:
     errors: list[str] = []
     decision_ids: dict[str, int] = {}
     domain_numbers: dict[str, list[int]] = {}
+    dependencies: list[tuple[str, str, int]] = []
+    current_decision_id: str | None = None
     for line_number, line in enumerate(lines, start=1):
         dotted_heading = DOTTED_HEADING_RE.match(line)
         heading = HEADING_RE.match(line) if not dotted_heading else None
@@ -43,9 +47,11 @@ def validate(path: Path) -> list[str]:
                 f"{path}:{line_number}: decision headings must use a single-level "
                 f"id; dotted decision id is not allowed ({decision_id})"
             )
+            current_decision_id = None
 
         elif heading:
             decision_id = heading.group(1)
+            current_decision_id = decision_id
             if decision_id in decision_ids:
                 errors.append(
                     f"{path}:{line_number}: duplicate decision id {decision_id} "
@@ -57,6 +63,17 @@ def validate(path: Path) -> list[str]:
             if match:
                 domain_numbers.setdefault(match.group(1), []).append(
                     int(match.group(2))
+                )
+        elif line.startswith("### "):
+            current_decision_id = None
+
+        dependency_field = DEPENDENCY_FIELD_RE.match(line)
+        if dependency_field and current_decision_id:
+            for dependency_id in DEPENDENCY_ID_RE.findall(
+                dependency_field.group(1)
+            ):
+                dependencies.append(
+                    (current_decision_id, dependency_id, line_number)
                 )
 
         if not dotted_heading:
@@ -79,6 +96,20 @@ def validate(path: Path) -> list[str]:
             errors.append(
                 f"{path}: decision ids in domain {domain} must appear in "
                 f"continuous document order; found {numbers}, expected {expected}"
+            )
+
+    for decision_id, dependency_id, line_number in dependencies:
+        dependency_line = decision_ids.get(dependency_id)
+        if dependency_line is None:
+            errors.append(
+                f"{path}:{line_number}: prerequisite {dependency_id} referenced "
+                f"by {decision_id} does not exist"
+            )
+        elif dependency_line >= decision_ids[decision_id]:
+            errors.append(
+                f"{path}:{line_number}: prerequisite {dependency_id} for "
+                f"{decision_id} must appear before the dependent decision "
+                f"(found at line {dependency_line})"
             )
 
     return errors
