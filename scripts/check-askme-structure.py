@@ -16,13 +16,14 @@ DOTTED_HEADING_RE = re.compile(
     r"^###\s+(?:决策点|条件决策点)\s+(D-[A-Z0-9]+)\.([0-9]+)(?::|：)(.+)$"
 )
 DOTTED_ID_RE = re.compile(r"\bD-[A-Z0-9]+\.[0-9]+\b")
+DECISION_INDEX_RE = re.compile(r"(?:独立|关联)决策项索引")
 
 
 def validate(path: Path) -> list[str]:
     lines = path.read_text(encoding="utf-8").splitlines()
     errors: list[str] = []
     decision_ids: dict[str, int] = {}
-    domain_numbers: dict[str, set[int]] = {}
+    domain_numbers: dict[str, list[int]] = {}
     for line_number, line in enumerate(lines, start=1):
         dotted_heading = DOTTED_HEADING_RE.match(line)
         heading = HEADING_RE.match(line) if not dotted_heading else None
@@ -54,7 +55,7 @@ def validate(path: Path) -> list[str]:
                 decision_ids[decision_id] = line_number
             match = re.fullmatch(r"D-([A-Z])(\d+)", decision_id)
             if match:
-                domain_numbers.setdefault(match.group(1), set()).add(
+                domain_numbers.setdefault(match.group(1), []).append(
                     int(match.group(2))
                 )
 
@@ -66,19 +67,18 @@ def validate(path: Path) -> list[str]:
                     f"outside migration history ({dotted_reference.group(0)})"
                 )
 
-        if "独立决策项索引" in line:
+        if DECISION_INDEX_RE.search(line):
             errors.append(
-                f"{path}:{line_number}: independent decision indexes must use "
-                "same-level decision ids and the renamed related-index form"
+                f"{path}:{line_number}: decision indexes are not allowed; keep "
+                "explanatory content inside its parent decision"
             )
 
     for domain, numbers in domain_numbers.items():
-        expected = set(range(1, max(numbers) + 1))
-        missing = sorted(expected - numbers)
-        if missing:
+        expected = list(range(1, len(numbers) + 1))
+        if numbers != expected:
             errors.append(
-                f"{path}: decision ids in domain {domain} are not continuous; "
-                f"missing {', '.join(f'D-{domain}{n}' for n in missing)}"
+                f"{path}: decision ids in domain {domain} must appear in "
+                f"continuous document order; found {numbers}, expected {expected}"
             )
 
     return errors

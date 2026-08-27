@@ -35,6 +35,10 @@ def main() -> int:
     assert dotted_reference.returncode == 1, dotted_reference.stdout + dotted_reference.stderr
     assert "outside migration history" in dotted_reference.stderr
 
+    decision_index = run_checker("**关联决策项索引**：\n")
+    assert decision_index.returncode == 1, decision_index.stdout + decision_index.stderr
+    assert "decision indexes are not allowed" in decision_index.stderr
+
     single_level = run_checker(
         "### 决策点 D-B1：一\n"
         "### 决策点 D-B2：二\n"
@@ -53,7 +57,13 @@ def main() -> int:
         "### 决策点 D-B1：一\n\n### 决策点 D-B3：三\n"
     )
     assert gap.returncode == 1, gap.stdout + gap.stderr
-    assert "missing D-B2" in gap.stderr
+    assert "continuous document order" in gap.stderr
+
+    reordered = run_checker(
+        "### 决策点 D-B2：二\n\n### 决策点 D-B1：一\n"
+    )
+    assert reordered.returncode == 1, reordered.stdout + reordered.stderr
+    assert "continuous document order" in reordered.stderr
 
     print("AskMe structure validator tests passed")
     return 0
