@@ -1,13 +1,13 @@
 # asdm-devflow Skill 总体设计
 
 > 状态：已完成（总体设计基线），待详细设计与实现
-> 日期：2026-08-25
+> 日期：2026-08-31
 > 文档角色：Skill 的完整总体设计（DEVFLOW-DESIGN）
 > 需求基线：[asdm-devflow-skill-design.md](asdm-devflow-skill-design.md)
 > AskMe 设计：[asdm-devflow-skill-askme-design.md](asdm-devflow-skill-askme-design.md)
 > 详细设计：[asdm-devflow-skill-detail-design.md](asdm-devflow-skill-detail-design.md)
 > 追溯状态：`in_sync`
-> 设计版本：`3.1`
+> 设计版本：`3.2`
 > 对应需求版本：`1.3`
 > 最近同步变更：`CR-003`
 
@@ -650,6 +650,14 @@ AskMe → Overall → Detailed → Plan → 代码/测试/运行时证据
 
 Detail 可以细化实现，但不能首次发明 AskMe/Overall 中没有的核心能力或阶段逻辑。
 
+### 12.3 AskMe、Overall 与 Detail 的边界
+
+AskMe 只确认会改变 Skill 目标、范围、流程、外部契约或质量门禁的设计决策，并规定如何根据事实、风险和未知项动态生成运行时决策。AskMe 不维护固定的项目问题清单，也不登记跨阶段的“延迟确认项”。
+
+Overall 承接已确认的阶段能力、命令边界、阶段门禁、共享能力路由和架构级约束，包括 Skill 的命名、安装范围和总体目录边界。Detail 承接文件级实现，包括模板章节和锚点、Markdown/Schema 规则、统一错误码、style token、代码索引和路由识别、索引刷新、运行时验证、迁移字段映射、脚本和自动化测试。
+
+如果某项会改变 AskMe 的范围、流程或契约，必须返回 AskMe 创建正式决策；如果只决定 Overall 的架构或 Detail 的文件级实现，则在对应阶段确认，不得以 AskMe 中的待确认列表替代阶段门禁。
+
 ## 13. 设计取舍
 
 ### 为什么状态和 Markdown 分开
@@ -698,6 +706,7 @@ Markdown 适合人读和评审，JSON 适合机器判断阶段、依赖和过期
 | ------ | ------ | ---------- |
 | 2026-08-25 | 3.0 | 从生成约束摘要改为面向人和 AI 的完整总体设计，补充能力、流程、状态、异常和示例 |
 | 2026-08-25 | 3.1 | `CR-003`：补齐 Project/Feature 双分支、父子生命周期、统一目录、状态投影协议和双向追溯 |
+| 2026-08-31 | 3.2 | 明确 AskMe 动态决策生成与 Overall/Detail 的阶段边界，移除延迟确认项作为 AskMe 交接产物 |
 
 ## 16. Detail 入口条件
 

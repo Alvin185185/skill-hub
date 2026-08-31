@@ -35,6 +35,18 @@ def main() -> int:
     assert dotted_reference.returncode == 1, dotted_reference.stdout + dotted_reference.stderr
     assert "outside migration history" in dotted_reference.stderr
 
+    conditional_heading = run_checker("### 条件决策点 M1.1：目标\n")
+    assert conditional_heading.returncode == 1, (
+        conditional_heading.stdout + conditional_heading.stderr
+    )
+    assert "conditional decision headings are not allowed" in conditional_heading.stderr
+
+    conditional_reference = run_checker("| M1.1 | 目标 |\n")
+    assert conditional_reference.returncode == 1, (
+        conditional_reference.stdout + conditional_reference.stderr
+    )
+    assert "dotted conditional id is not allowed" in conditional_reference.stderr
+
     decision_index = run_checker("**关联决策项索引**：\n")
     assert decision_index.returncode == 1, decision_index.stdout + decision_index.stderr
     assert "decision indexes are not allowed" in decision_index.stderr

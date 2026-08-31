@@ -16,6 +16,8 @@ DOTTED_HEADING_RE = re.compile(
     r"^###\s+(?:决策点|条件决策点)\s+(D-[A-Z0-9]+)\.([0-9]+)(?::|：)(.+)$"
 )
 DOTTED_ID_RE = re.compile(r"\bD-[A-Z0-9]+\.[0-9]+\b")
+M_DOTTED_ID_RE = re.compile(r"\bM[0-9]+\.[0-9]+\b")
+CONDITIONAL_HEADING_RE = re.compile(r"^###\s+条件决策点\s+")
 DECISION_INDEX_RE = re.compile(r"(?:独立|关联)决策项索引")
 DEPENDENCY_FIELD_RE = re.compile(r"^\*\*前置依赖\*\*：(.+)$")
 DEPENDENCY_ID_RE = re.compile(r"\bD-[A-Z]\d+\b")
@@ -29,6 +31,13 @@ def validate(path: Path) -> list[str]:
     dependencies: list[tuple[str, str, int]] = []
     current_decision_id: str | None = None
     for line_number, line in enumerate(lines, start=1):
+        if CONDITIONAL_HEADING_RE.match(line):
+            errors.append(
+                f"{path}:{line_number}: conditional decision headings are not "
+                "allowed; use a single-level D-{domain}{number} decision or "
+                "an unnumbered explanatory heading"
+            )
+
         dotted_heading = DOTTED_HEADING_RE.match(line)
         heading = HEADING_RE.match(line) if not dotted_heading else None
 
@@ -83,6 +92,13 @@ def validate(path: Path) -> list[str]:
                     f"{path}:{line_number}: dotted decision id is not allowed "
                     f"outside migration history ({dotted_reference.group(0)})"
                 )
+
+        m_dotted_reference = M_DOTTED_ID_RE.search(line)
+        if m_dotted_reference:
+            errors.append(
+                f"{path}:{line_number}: dotted conditional id is not allowed "
+                f"({m_dotted_reference.group(0)})"
+            )
 
         if DECISION_INDEX_RE.search(line):
             errors.append(
