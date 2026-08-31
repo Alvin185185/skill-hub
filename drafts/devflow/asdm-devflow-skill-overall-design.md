@@ -99,7 +99,7 @@ Review：检查设计质量、实现符合性和证据真实性
 | 证据管理 | 如何证明文档中的事实和行为 | Detailed、Execute、Review |
 | Agent 编排 | 如何隔离实施者和验收者的判断 | Execute、Review |
 | 运行时验证 | 如何启动环境并取得真实行为证据 | Execute、Review |
-| UI 能力 | 如何设计、生成和验证页面 | Overall、Detailed、Execute、Review |
+| UI 能力 | 如何引用设计约束、生成 SVG 并验证真实页面 | Overall、Detailed、Execute、Review |
 | 收敛检查 | 如何发现缺失、矛盾和计划外实现 | Review、Sync |
 
 ## 4. 总体架构
@@ -221,7 +221,7 @@ Skill 独立维护自己的状态、代码关系索引、Agent 编排和运行�
     ├── FT-{id}-{name}-Plan.md
     ├── FT-{id}-{name}-Review-{mode}-{date}.md
     ├── mockup-{page}.svg
-    ├── style-tokens.json
+    ├── style-tokens.json       # 现有系统扫描快照，不是第二份人工设计源
     └── changes/
 ```
 

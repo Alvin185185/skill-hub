@@ -154,7 +154,7 @@ Feature 状态必须额外包含 `feature_id` 和父 `project_id`。每个命令
 │   ├── workflow-profiles.md     ← 风险分级与三档工作流
 │   ├── state-schema.md          ← state.json schema、状态迁移与过期规则
 │   ├── convergence.md           ← 跨制品收敛检查规范
-│   └── ui-generation.md         ← UI 效果图生成能力（新增）
+│   └── ui-generation.md         ← 固定 `asdm-ui` SVG 效果图调用规范（新增）
 └── assets/
     ├── askme-template.md        ← 需求访谈文档模板
     ├── overall-template.md      ← 概要设计文档模板
@@ -299,7 +299,7 @@ Feature 状态必须额外包含 `feature_id` 和父 `project_id`。每个命令
 
 - Overall 骨架继承 + Agent 自由扩展区（按复杂度决定章节）
 - **`## UI 设计` 章节**（涉及 UI 时强制）：
-  - 引用 SVG 效果图（每页面一份 `mockup-{page}.svg`，由 ui-generation 生成，详见 §5.6）
+  - 引用 SVG 效果图（每页面一份 `mockup-{page}.svg`，由固定 `asdm-ui` 生成，详见 §5.6）
   - 字段对照表（页面字段 ↔ API schema 双向对照，作为 E4 证据载体）
   - 组件清单（复用/新增标注 + 设计系统 token）
   - 状态机（含空态/错误态/加载态）
@@ -334,7 +334,7 @@ Feature 状态必须额外包含 `feature_id` 和父 `project_id`。每个命令
 
 **任务标准结构**：`{P.T}` 编号 + 类型化描述子节（部署要求/工程属性/核心逻辑/校验范围/配置要点/UI 实现要点，参数值必须从 Detailed 提取）+ 交付物 + 验证步骤（checkbox，`V{P.T.N}` 编号，「操作→预期」+ 验证命令，每任务 4~8 条覆盖正常/异常/边界/安全/UI 视觉）。涉及运行时的任务必须同时写明启动/重建方式、端口、健康检查、日志来源和如何确认使用最新代码；不得用「页面正常」「看起来没问题」作为预期。
 
-**UI 任务验证步骤**（涉及 UI 时强制）：视觉一致性验证（playwright 截图 vs SVG 效果图对照）、可访问性扫描（axe-core 跑无 critical/serious）、交互路径验证（关键路径脚本）。
+**UI 任务验证步骤**（涉及 UI 时强制）：由 `asdm-devflow` 的 Verifier/Reviewer 执行视觉一致性验证（Playwright 截图 vs SVG 效果图对照）、可访问性扫描（axe-core 跑无 critical/serious）和交互路径验证（关键路径脚本）。固定 `asdm-ui` 只负责生成 SVG 及其自检。
 
 **组装**：项目概述→进度概要表（⏳）→各 Phase→实施顺序→风险→变更模块总览→追溯矩阵（DoD↔任务↔验证步骤全覆盖）→ design 评审（开发+测试+前端专家，重点审验证步骤可执行性）→ JSON + next_steps(execute)。
 
@@ -350,8 +350,8 @@ Feature 状态必须额外包含 `feature_id` 和父 `project_id`。每个命令
 2. 按 profile 选择执行方式：`light` 可由当前 agent 直接执行；`standard/full` 默认由 Coordinator 创建一个边界明确的 Worker 执行，当前 agent 只负责上下文准备、调度和汇总。Worker 只接收当前任务、相关设计证据和验证步骤，不承担跨任务决策。
 3. 实现；修改源码后立即执行 config `build_commands` 对应构建，失败先修复。涉及运行时的任务按 `runtime-verification` 协议启动/重建进程、健康检查并记录日志位置。
 4. 逐条执行 `V{P.T.N}` 命令，**实际比对输出与预期断言**（禁止「看起来差不多」）：通过则勾选；失败进入「现象→证据→假设→修复→重建/重启→再验证」循环，同一问题最多 3 轮；仍失败标 🔴 阻塞、停止后续、上报。
-5. UI 任务额外验证（涉及 UI 时）：
-   - **视觉验证子agent**：playwright 截图实现页面 vs SVG 效果图，AI 视觉模型做一致性对比（pixel diff 或语义对比），偏差 < 阈值通过
+5. UI 任务额外验证（涉及 UI 时）：由 `asdm-devflow` 的 Verifier/Reviewer 执行：
+   - **视觉验证子agent**：Playwright 截图实现页面 vs SVG 效果图，AI 视觉模型做一致性对比（pixel diff 或语义对比），偏差 < 阈值通过
    - **可访问性扫描子agent**：axe-core / pa11y 跑 WCAG 扫描，0 critical/serious 通过
    - **交互验证子agent**：playwright 跑关键路径脚本，状态切换/表单校验/键盘可达全通过
 6. 全部 ✅ 后由独立 Verifier 子 agent 按 DoD 和验证步骤重跑（见 §5.5），Coordinator 只接收结构化 pass/fail、实际输出和证据位置；Verifier 不得复用 Worker 的自评结论。
@@ -386,7 +386,7 @@ Feature 状态必须额外包含 `feature_id` 和父 `project_id`。每个命令
 
 - 设计符合性审查员：双向偏差矩阵（「设计有但未实现」/「实现了但设计没有」），核对已登记偏差合理性，DoD 状态与代码实际一致性
 - 代码质量审查员：缺陷（空指针/泄漏/并发/事务/错误处理）、安全（注入/越权/敏感信息）、契约一致性、测试覆盖
-- **UI 符合性审查员**（涉及 UI 时）：实现页面 vs SVG 效果图视觉一致性、可访问性扫描结果、响应式断点、跨页面风格一致性
+- **UI 符合性审查员**（涉及 UI 时）：由 `asdm-devflow` 调度，检查实现页面 vs SVG 效果图视觉一致性、可访问性扫描结果、响应式断点、跨页面风格一致性；固定 `asdm-ui` 不提供该角色
 - 运行时符合性审查：抽查进程启动/健康检查/最新代码确认、API 或页面实际结果、日志关键路径；跨进程问题必须使用 request/task/correlation id 追踪
 - 验收审查员：**由独立子 agent 担任**（见 §5.5），按工作流档位和风险重跑验证步骤，抽查 execute 声称通过的真实性（比对实际输出与执行记录），补充边界异常临时验证；高风险验证必须 100% 重跑；结论：通过 / 有条件通过（附条件清单）/ 不通过
 - 执行 §5.8 收敛检查：比较 AskMe/Overall/Detailed/Plan/代码/测试，未实现、部分实现、计划外实现和契约矛盾必须形成明确处置
@@ -425,7 +425,7 @@ Sync 同时支持 Project 和 Feature 作为来源或目标。Project 级架构�
 6. 一致性与收敛复检，更新 `state.json` 并归档提案
 7. 输出 JSON：根因文档 + 修正项 + 影响文档/产物 + CR 编号 + 提案状态
 
-**SVG 效果图变更**：设计稿（SVG）变更时，影响图独立一条链：`SVG 效果图 → UI 设计章节 → Detailed(API 契约/前端实现) → Plan(前端任务/验证步骤) → 已实现页面(返工)`。修正模式触发时，先回溯 SVG 是否仍是当前最新（如 ui-generation 重新生成），再传播影响。
+**SVG 效果图变更**：设计稿（SVG）变更时，影响图独立一条链：`SVG 效果图 → UI 设计章节 → Detailed(API 契约/前端实现) → Plan(前端任务/验证步骤) → 已实现页面(返工)`。修正模式触发时，先回溯 SVG 是否仍是当前最新（如固定 `asdm-ui` 重新生成），再传播影响。
 
 **硬规则**：每次变更都必须做影响分析，但不得为了形式强制修改无关文档；「无下游影响」必须附推导依据。决策点翻转必须回 AskMe 更新，禁止绕过源文档直改下游；待审批 proposal 不得污染当前有效基线；跨文档同事实冲突按 error 处理。
 
@@ -531,7 +531,7 @@ Sync 同时支持 Project 和 Feature 作为来源或目标。Project 级架构�
 | Detailed/Overall 多角色评审 | 并行 spawn PM/架构/开发/测试/UX/前端专家 子 agent | 文档 + 角色 prompt | 各角色独立意见（引用具体位置） |
 | Execute 验收 | 独立验收子 agent | DoD + 验证步骤 + 代码 | pass/fail + 实际输出 + 偏差 |
 | Execute 实施编排 | Coordinator → Worker → Verifier | Plan 任务 + Detailed 设计项 + 验证步骤 | 父子任务状态、执行记录、独立验收结论 |
-| Execute UI 验证（涉及 UI 时） | 视觉验证 / 可访问性扫描 / 交互验证 子 agent | playwright 截图 + SVG 效果图 / 页面 URL | 一致性 pass/fail + a11y 扫描结果 |
+| Execute UI 验证（涉及 UI 时） | `asdm-devflow` 的视觉验证 / 可访问性扫描 / 交互验证子 agent | Playwright 截图 + SVG 效果图 / 页面 URL | 一致性 pass/fail + a11y 扫描结果 |
 | Review impl | 设计符合性 / 代码质量 / 验收重跑 / UI 符合性 四类子 agent | Detailed + Plan + 代码 + SVG | 偏差矩阵 / 缺陷清单 / 重跑结果 / UI 一致性结果 |
 | Review L3 证据抽查 | E1 / E3 / E4 抽查子 agent | 文档 + 引用清单 + SVG 文件 + 字段对照表 | 抽查结果（引用真实 / 不存在 / 字段一致） |
 | Sync 影响分析 | 依赖扫描子 agent | 变更点 + 代码库 | 受影响文档/章节清单 |
@@ -571,34 +571,26 @@ Sync 同时支持 Project 和 Feature 作为来源或目标。Project 级架构�
 
 ### 5.6 UI 效果图生成能力（新增，堵缺口 7）
 
-> 封装为 `references/ui-generation.md`，由 detailed 阶段二调用。本节定义能力规范。
+> 封装为 `references/ui-generation.md`，由 detailed 阶段二调用固定 `asdm-ui`。本节定义 SVG 生成调用规范。
 
 #### 5.6.1 定位
 
-UI = **截图级效果图（SVG 格式）**，作为实现视觉标准，页面照这个做。由 skill 自己生成，可调用可用的 UI、图像或代码生成能力，不依赖外部 Figma 或用户提供参考图。
+固定 `asdm-ui` 只负责生成截图级 SVG 效果图，作为实现阶段的视觉基线；不负责
+页面实现、真实页面验证、设计 Review 或实施验收。它不依赖外部 Figma 或用户提供
+参考图。
 
-输入至少包括页面标识、页面职责、场景、字段、交互状态、现有页面资产、设计 Token 和目标视口；输出至少包括每页面 `mockup-{page}.svg`、输入版本、生成工具和版本、Token 版本、时间及重试记录。理由：SVG 是文本，可 AI 直接生成、可 diff、可机械解析（E3 抽查子 agent 可 `read_file` 读内容验证字段）、项目已有先例（docs 下 56 个 SVG）。
+输入至少包括页面标识、页面职责、场景、字段、交互状态、现有页面事实、设计约束
+和目标视口；输出至少包括每页面 `mockup-{page}.svg`、输入版本、生成工具和版本、
+约束版本、时间及生成结果。SVG 是文本，可直接 diff 和机械解析。
 
-#### 5.6.2 三段式工作流
+#### 5.6.2 调用流程
 
 ```text
-阶段一：风格识别（静态分析，不访问 URL）
-  ├─ 用户输入：路径 / URL / 功能描述（三种均支持）
-  ├─ skill 解析输入 → 路径（URL 提取 path 部分，功能描述语义匹配）
-  ├─ 读项目路由配置 → 路径 → 组件文件
-  │   └─ 多框架支持：React Router / Vue Router / Next.js (App/Pages Router) / Angular
-  ├─ 读组件文件 + import 链 → 提取样式信息
-  │   └─ 来源：CSS 变量 / 主题文件 / Tailwind class / styled-components / CSS Module / 组件库主题覆盖 / inline style
-  ├─ 多页面交叉验证，汇总 style-tokens.json
-  └─ 路径找不到组件 → 系统继续扫描并记录阻塞，不要求用户提供源码或参考图
-
-阶段二：风格约束生成（产出 SVG）
-  └─ 生成 Worker 调用可用 Skill 或代码生成能力生成 SVG，prompt 模板注入 style-tokens 作为约束
-
-阶段三：质量检测（失败诊断修复后重生成，最多 3 轮）
-  ├─ 风格一致性：解析 SVG 文本 vs style-tokens 比对（机械可查）
-  ├─ 多页面一致性：多个 SVG 之间风格变量比对（配色/字号/圆角/间距不漂移）
-  └─ 字段准确性：字段名在 SVG 文本中确实出现（vs Detailed UI 章节字段清单）
+Detailed/现有系统事实/设计约束
+  → asdm-devflow 按固定协议调用 asdm-ui
+  → asdm-ui 生成 mockup-{page}.svg 并执行解析、渲染、输入覆盖自检
+  → 返回 SVG、生成元数据和错误
+  → asdm-devflow 的 Design Review 供人或 AI 审核效果图
 ```
 
 #### 5.6.3 用户输入支持
@@ -627,22 +619,26 @@ UI = **截图级效果图（SVG 格式）**，作为实现视觉标准，页面�
 
 | 关 | 检测者 | 检测什么 |
 |----|--------|---------|
-| 内置检测（生成时） | ui-generation 内部 | 风格一致性 / 多页面一致性 / 字段准确性 |
-| 浏览器验证（execute 时） | Playwright + axe-core/pa11y | 实际渲染、响应式、溢出/重叠、交互、可访问性 |
-| 独立复核（review 时） | UI 符合性审查子 agent | SVG 效果图 vs 浏览器实际截图（最终一致性） |
+| SVG 自检（生成时） | 固定 `asdm-ui` 内部 | SVG 解析 / 渲染 / 输入覆盖 |
+| 浏览器验证（execute 时） | `asdm-devflow` Verifier：Playwright + axe-core/pa11y | 实际渲染、响应式、溢出/重叠、交互、可访问性 |
+| 独立复核（review 时） | `asdm-devflow` UI 符合性 Reviewer | SVG 效果图 vs 浏览器实际截图（最终一致性） |
 
-SVG 文本检查只能证明字段和 token 被写入，不能证明浏览器真实渲染正确；最终 UI 结论必须基于目标桌面/移动视口的浏览器截图与交互结果。独立子 agent 复核用于切断「自己生成自己判」自评环。
+SVG 文本检查只能证明字段和约束被写入，不能证明浏览器真实渲染正确；最终 UI 结论
+必须基于目标桌面/移动视口的浏览器截图与交互结果。真实页面验证和独立复核均由
+`asdm-devflow` 执行。
 
 #### 5.6.6 失败诊断与重试
 
-SVG 生成、解析、渲染或检测失败时，不得直接降级为用户提供的图片、文字或 ASCII 产物。系统必须保存错误、输入版本和当前产物，分析根因并修正输入、Token、提示词、工具调用或运行环境后重试；最多自动执行 3 轮“诊断→修复→重生成→复检”。
+SVG 生成、解析或渲染失败时，不得直接降级为用户提供的图片、文字或 ASCII 产物。
+`asdm-ui` 返回错误和必要诊断信息；重试次数、输入修正、设计 Review 失败后的重新
+生成以及最终 `blocked` 由 `asdm-devflow` 统一控制，最多自动执行 3 轮。
 
 | 情况 | 处理 |
 |------|---------|
 | 生成 Skill 或工具调用失败 | 记录调用错误，检查参数、能力和运行环境后重试 |
 | SVG 语法或渲染失败 | 定位无效节点、尺寸或资源引用，修正后重新生成并渲染 |
-| 字段、Token 或页面状态缺失 | 对照 Detailed 输入和 `style-tokens.json` 修正生成输入后重试 |
-| 多页面风格检测失败 | 定位漂移的 Token 或页面约束，修正约束后重新生成受影响页面 |
+| 字段、约束或页面状态缺失 | 对照 Detailed 输入和现有系统事实修正生成输入后重试 |
+| SVG 自检失败 | 定位无效节点、尺寸、资源引用或输入覆盖缺失，修正生成输入后重试 |
 | 三轮修复后仍失败 | 标记 `blocked`，记录根因、尝试过的修复和最后证据，不要求用户补图或自动降低标准 |
 
 ### 5.7 调研分层机制（新增）
@@ -721,7 +717,7 @@ SVG 生成、解析、渲染或检测失败时，不得直接降级为用户提�
 5. 清理初始化遗留示例文件（`references/api_reference.md`、`scripts/`、`assets/` 示例）
 6. markdownlint 全量校验 + 打包验证
 7. **新增 UI 机制**（基于本设计补强）：
-   - 新增 `references/ui-generation.md`（UI 效果图生成能力规范）
+   - 新增 `references/ui-generation.md`（固定 `asdm-ui` SVG 效果图调用规范）
    - 新增 `assets/style-tokens-template.json`（风格 token 模板）
    - 4 个命令文件（askme/overall/detailed/breakdown）增加 UI 职责描述
    - execute/review/sync 命令文件增加 UI 验证/审查/变更传播逻辑
@@ -749,7 +745,7 @@ SVG 生成、解析、渲染或检测失败时，不得直接降级为用户提�
 | P0 | Coordinator → Worker → Verifier 编排 | 切断实施自评环 |
 | P0 | runtime 配置 + 可复现运行 + E5 证据 | 真实运行结果可复核 |
 | P0 | execute 验收位 spawn 独立子 agent | 切断验收自评环 |
-| P0 | UI 效果图生成能力（ui-generation.md + 三段式工作流） | 页面有正式承载位 |
+| P0 | 固定 `asdm-ui` SVG 效果图调用能力（ui-generation.md） | 页面有正式承载位 |
 | P0 | execute 视觉验证子 agent（涉及 UI 时） | 切断「自己实现自己说像」自评环 |
 | P1 | E1 证据机械抽查子 agent | 替代自报 |
 | P1 | light/standard/full 风险分级工作流 | 小改动不过度工程，高风险不漏门禁 |
