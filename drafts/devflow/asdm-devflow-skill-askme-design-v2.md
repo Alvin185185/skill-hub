@@ -83,9 +83,10 @@ Project 和 Feature 走怎样的主流程、有哪几个阶段、`sync` 和主�
 
 ### 已确认结论
 - **六阶段阶段闭环**，Project 和 Feature 共用同一骨架：
-  `AskMe → Review → Overall → Review → Detailed → Review → Breakdown → Review → Execute → Review`
-- 每个阶段是**"阶段执行 → 阶段产出 → 多角色 Review → 门禁判定"**的闭环；**Review 未通过不得进入下一阶段**，否则在当前阶段返工。
+  `AskMe → Verify → Review → Overall → Verify → Review → Detailed → Verify → Review → Breakdown → Verify → Review → Execute → Verify → Review`
+- 每个阶段是**"阶段执行 → 阶段产出 → Verifier 验证 → Reviewer 评审 → 门禁判定"**的闭环；**Verifier 未通过或 Review 未通过均不得进入下一阶段**，否则在当前阶段返工。
 - 每阶段由 **Coordinator 编排一个或多个 Worker 产出**，由**一个或多个 Reviewer** 按阶段专属评审重点独立验收；支持流水线和人工两种运行方式。
+- **Verifier** 按阶段的 DoD、契约和验证步骤实际核验，输出 `pass/fail + 证据`；只有 Verifier 通过且 Reviewer 通过，阶段才可进入下一阶段。
 - **`sync` 是横切命令**：可在任意工作文档被指出错误或发生变化时调用，经影响分析和用户确认后修正上下游；无变更时不产生空阶段。
 - 保留 **7 个用户命令**（askme/overall/detailed/breakdown/execute/review/sync）；UI、运行时、代码理解等作为**对应阶段的内部能力**，不单独成命令。
 - 真人在规定门禁，以及命中需真人裁决的条件（不可逆/契约/安全/合规等）或冲突时，承担最终审核与裁决。
@@ -113,7 +114,7 @@ Project 和 Feature 走怎样的主流程、有哪几个阶段、`sync` 和主�
 - **专业视角**（产品/前端/后端/测试/架构/UX/安全/契约…）是 Agent 的视角配置，**不是新的流程角色**。需要多个独立视角时，创建多个对应 Agent。
 
 ### 待定岔路
-- **哪些条件强制真人裁决**（如不可逆操作/外部契约/安全/合规等）：与评审角色的条件触发同属一套可判定条件体系，待统一梳理条件体系时定，不靠风险等级判定。
+- **条件体系不在 AskMe 阶段展开。** 由后续 Overall 阶段统一确定“事实 → 触发的能力/角色 → 是否需要真人裁决”的规则形状，Detailed 阶段再确定具体实现。本阶段仅保留：角色配置和真人裁决必须依据统一、可判定的条件体系，不能依靠模型临场判断。
 
 ### 实现线索
 —
